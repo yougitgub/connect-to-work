@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Connect - Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container auth-container">
+        <div class="card">
+            <h1 class="text-center mb-4" style="color: var(--primary-color);">Worker Connect</h1>
+            
+            <div class="auth-toggle">
+                <button id="show-login" class="active">Login</button>
+                <button id="show-register">Register</button>
+            </div>
+
+            <div id="error-message"></div>
+
+            <!-- Login Form -->
+            <form id="login-form">
+                <div class="input-group">
+                    <label class="label">Phone Number</label>
+                    <input type="tel" id="login-phone" class="input" required placeholder="01xxxxxxxxx">
+                </div>
+                <div class="input-group">
+                    <label class="label">Password</label>
+                    <input type="password" id="login-password" class="input" required placeholder="********">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="hidden">
+                <div class="input-group">
+                    <label class="label">Full Name</label>
+                    <input type="text" id="reg-name" class="input" required placeholder="John Doe">
+                </div>
+                <div class="input-group">
+                    <label class="label">Phone Number</label>
+                    <input type="tel" id="reg-phone" class="input" required placeholder="01xxxxxxxxx">
+                </div>
+                <div class="input-group">
+                    <label class="label">Password</label>
+                    <input type="password" id="reg-password" class="input" required placeholder="********">
+                </div>
+                <div class="input-group">
+                    <label class="label">I am a...</label>
+                    <select id="reg-role" class="input">
+                        <option value="user">Regular User (Looking for workers)</option>
+                        <option value="worker">Worker (Offering services)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+            </form>
+            
+            <div class="text-center mt-4">
+                <a href="index.html" class="text-sm text-muted" style="text-decoration: none;">Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Check if already logged in
+        const user = Storage.getCurrentUser();
+        if (user) {
+            window.location.href = 'index.html';
+        }
+
+        // UI Toggles
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const showLoginBtn = document.getElementById('show-login');
+        const showRegisterBtn = document.getElementById('show-register');
+
+        showLoginBtn.addEventListener('click', () => {
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            showLoginBtn.classList.add('active');
+            showRegisterBtn.classList.remove('active');
+        });
+
+        showRegisterBtn.addEventListener('click', () => {
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            showLoginBtn.classList.remove('active');
+            showRegisterBtn.classList.add('active');
+        });
+
+        // Login Logic
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('login-phone').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                Auth.login(phone, password);
+                window.location.href = 'index.html';
+            } catch (error) {
+                UI.showError(error.message, 'error-message');
+            }
+        });
+
+        // Register Logic
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+            const password = document.getElementById('reg-password').value;
+            const role = document.getElementById('reg-role').value;
+
+            try {
+                Auth.register(name, phone, password, role);
+                window.location.href = 'index.html';
+            } catch (error) {
+                UI.showError(error.message, 'error-message');
+            }
+        });
+    </script>
+</body>
+</html>

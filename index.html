@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Connect - Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="container header-content">
+            <a href="index.html" class="logo">Worker Connect</a>
+            
+            <!-- Logged In Header -->
+            <div id="auth-nav" class="flex items-center gap-4 hidden">
+                <span id="user-name" class="font-bold"></span>
+                <a id="edit-profile-link" href="dashboard.html" class="btn btn-outline text-sm hidden">Edit Profile</a>
+                <button id="logout-btn" class="btn btn-outline text-sm">Logout</button>
+            </div>
+
+            <!-- Public Header -->
+            <div id="public-nav" class="flex items-center gap-4 hidden">
+                <a href="login.html" class="btn btn-primary text-sm">Login / Register</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mt-4">
+        <div class="card">
+            <h2 class="mb-4 text-center">Find a Worker</h2>
+            <div class="input-group">
+                <input type="text" id="search-input" class="input" placeholder="Search by job title (e.g., نجار)...">
+            </div>
+        </div>
+
+        <div id="workers-list" class="flex flex-col gap-4">
+            <!-- Workers will be injected here -->
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        // Check Auth State for Header
+        const currentUser = Storage.getCurrentUser();
+        const authNav = document.getElementById('auth-nav');
+        const publicNav = document.getElementById('public-nav');
+
+        if (currentUser) {
+            authNav.classList.remove('hidden');
+            document.getElementById('user-name').textContent = currentUser.name;
+            
+            if (currentUser.role === 'worker') {
+                document.getElementById('edit-profile-link').classList.remove('hidden');
+            }
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                Auth.logout();
+                window.location.href = 'index.html';
+            });
+        } else {
+            publicNav.classList.remove('hidden');
+        }
+
+        // Search & List Logic (Always active)
+        const searchInput = document.getElementById('search-input');
+        const workersList = document.getElementById('workers-list');
+        
+        function renderWorkers(filter = '') {
+            const workers = Storage.getWorkers();
+            const filtered = workers.filter(w => 
+                w.jobTitle && w.jobTitle.includes(filter)
+            );
+
+            if (filtered.length === 0) {
+                workersList.innerHTML = '<div class="text-center text-muted">No workers found.</div>';
+                return;
+            }
+
+            workersList.innerHTML = filtered.map(w => `
+                <div class="card worker-card">
+                    <div class="worker-header">
+                        <div>
+                            <div class="worker-name">${w.name}</div>
+                            <div class="worker-job">${w.jobTitle}</div>
+                        </div>
+                    </div>
+                    <div class="text-muted text-sm">${w.description || 'No description provided.'}</div>
+                    <div class="worker-actions">
+                        <a href="tel:${w.phone}" class="btn btn-primary btn-block">
+                            Call ${w.phone}
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initial render
+        renderWorkers();
+
+        // Search listener
+        searchInput.addEventListener('input', (e) => {
+            renderWorkers(e.target.value);
+        });
+    </script>
+</body>
+</html>

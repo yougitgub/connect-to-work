@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Connect - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="container header-content">
+            <a href="index.html" class="logo">Worker Connect</a>
+            <div class="flex items-center gap-4">
+                <span id="user-name" class="font-bold"></span>
+                <a href="index.html" class="btn btn-outline text-sm">Home</a>
+                <button id="logout-btn" class="btn btn-outline text-sm">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mt-4">
+        <!-- Worker View -->
+        <div id="worker-view">
+            <div class="card">
+                <h2 class="mb-4">Your Profile</h2>
+                <form id="profile-form">
+                    <div class="input-group">
+                        <label class="label">Job Title (Arabic)</label>
+                        <input type="text" id="job-title" class="input" placeholder="مثال: نجار، سباك، كهربائي" required>
+                        <p class="text-sm text-muted mt-4">This is how users will find you.</p>
+                    </div>
+                    <div class="input-group">
+                        <label class="label">Description / Skills</label>
+                        <textarea id="job-desc" class="input" rows="3" placeholder="Describe your services..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                </form>
+                <div id="profile-message" class="mt-4"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        // Check Auth
+        const currentUser = Storage.getCurrentUser();
+
+        if (!currentUser) {
+            window.location.href = 'login.html';
+        } else if (currentUser.role !== 'worker') {
+            window.location.href = 'index.html'; // Regular users don't need this page
+        }
+
+        if (currentUser) {
+            document.getElementById('user-name').textContent = currentUser.name;
+            initWorkerView();
+        }
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            Auth.logout();
+            window.location.href = 'index.html';
+        });
+
+        // Worker Logic
+        function initWorkerView() {
+            const jobInput = document.getElementById('job-title');
+            const descInput = document.getElementById('job-desc');
+            
+            // Load current data
+            jobInput.value = currentUser.jobTitle || '';
+            descInput.value = currentUser.description || '';
+
+            document.getElementById('profile-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const updatedUser = {
+                    ...currentUser,
+                    jobTitle: jobInput.value,
+                    description: descInput.value
+                };
+
+                Storage.saveUser(updatedUser);
+                Storage.setCurrentUser(updatedUser); // Update session
+                
+                const msg = document.getElementById('profile-message');
+                msg.textContent = 'Profile updated successfully!';
+                msg.style.color = 'var(--success-color)';
+                setTimeout(() => msg.textContent = '', 3000);
+            });
+        }
+    </script>
+</body>
+</html>
