@@ -13,8 +13,11 @@
             
             <!-- Logged In Header -->
             <div id="auth-nav" class="flex items-center gap-4 hidden">
-                <span id="user-name" class="font-bold"></span>
-                <a id="edit-profile-link" href="dashboard.html" class="btn btn-outline text-sm hidden">Edit Profile</a>
+                <div class="flex items-center gap-2">
+                    <div id="header-avatar"></div>
+                    <span id="user-name" class="font-bold"></span>
+                </div>
+                <a id="dashboard-link" href="dashboard.html" class="btn btn-outline text-sm">Dashboard</a>
                 <button id="logout-btn" class="btn btn-outline text-sm">Logout</button>
             </div>
 
@@ -26,12 +29,23 @@
     </header>
 
     <main class="container">
-        <div class="card" style="margin-bottom: 3rem; text-align: center; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1)); border: 1px solid rgba(255,255,255,0.1);">
+        <div class="card" style="margin-bottom: 2rem; text-align: center; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1)); border: 1px solid rgba(255,255,255,0.1);">
             <h2 class="mb-4">Find the Perfect Worker</h2>
             <p class="text-muted mb-4" style="max-width: 600px; margin: 0 auto 2rem;">Connect with skilled professionals in your area. Search by job title to find exactly who you need.</p>
             <div class="input-group" style="max-width: 600px; margin: 0 auto;">
                 <input type="text" id="search-input" class="input" placeholder="Search by job title (e.g., Carpenter, Plumber)...">
             </div>
+        </div>
+
+        <!-- Category Chips -->
+        <div class="chips-container" id="category-chips">
+            <button class="chip active" data-filter="">All</button>
+            <button class="chip" data-filter="نجار">نجار (Carpenter)</button>
+            <button class="chip" data-filter="سباك">سباك (Plumber)</button>
+            <button class="chip" data-filter="كهربائي">كهربائي (Electrician)</button>
+            <button class="chip" data-filter="نقاش">نقاش (Painter)</button>
+            <button class="chip" data-filter="حداد">حداد (Blacksmith)</button>
+            <button class="chip" data-filter="ميكانيكي">ميكانيكي (Mechanic)</button>
         </div>
 
         <div id="workers-list" class="flex flex-col gap-4">
@@ -49,10 +63,11 @@
         if (currentUser) {
             authNav.classList.remove('hidden');
             document.getElementById('user-name').textContent = currentUser.name;
+            document.getElementById('header-avatar').innerHTML = UI.getAvatar(currentUser.name).replace('avatar', 'avatar avatar-sm');
             
-            if (currentUser.role === 'worker') {
-                document.getElementById('edit-profile-link').classList.remove('hidden');
-            }
+            // Dashboard link text based on role
+            const dashLink = document.getElementById('dashboard-link');
+            dashLink.textContent = currentUser.role === 'worker' ? 'Edit Profile' : 'My Favorites';
 
             document.getElementById('logout-btn').addEventListener('click', () => {
                 Auth.logout();
@@ -62,9 +77,11 @@
             publicNav.classList.remove('hidden');
         }
 
-        // Search & List Logic (Always active)
+        // Search & List Logic
         const searchInput = document.getElementById('search-input');
         const workersList = document.getElementById('workers-list');
+        const chips = document.querySelectorAll('.chip');
+        let currentFilter = '';
         
         function renderWorkers(filter = '') {
             const workers = Storage.getWorkers();
@@ -77,30 +94,72 @@
                 return;
             }
 
-            workersList.innerHTML = filtered.map((w, index) => `
+            workersList.innerHTML = filtered.map((w, index) => {
+                const avatar = UI.getAvatar(w.name);
+                const rating = UI.getRating(w.id || w.phone);
+                const isFav = Storage.isFavorite(w.phone);
+                const heartClass = isFav ? 'active' : '';
+
+                return `
                 <div class="card worker-card" style="animation-delay: ${index * 0.1}s">
                     <div class="worker-header">
-                        <div>
-                            <div class="worker-name">${w.name}</div>
-                            <div class="worker-job">${w.jobTitle}</div>
+                        <div class="flex items-center gap-4">
+                            ${avatar}
+                            <div>
+                                <div class="worker-name">${w.name}</div>
+                                <div class="worker-job">${w.jobTitle}</div>
+                                <div class="rating">
+                                    <span>★ ${rating.stars}</span>
+                                    <span class="rating-count">(${rating.count} reviews)</span>
+                                </div>
+                            </div>
                         </div>
+                        ${currentUser ? `
+                        <button class="btn-icon ${heartClass}" onclick="toggleFav('${w.phone}')">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </button>
+                        ` : ''}
                     </div>
-                    <div class="text-muted text-sm" style="margin-top: 0.5rem;">${w.description || 'No description provided.'}</div>
-                    <div class="worker-actions">
+                    <div class="text-muted text-sm" style="margin-top: 0.5rem; padding-left: 64px;">${w.description || 'No description provided.'}</div>
+                    <div class="worker-actions" style="padding-left: 64px;">
                         <a href="tel:${w.phone}" class="btn btn-primary btn-block">
                             Call ${w.phone}
                         </a>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
+
+        // Global function for onclick
+        window.toggleFav = (phone) => {
+            const isAdded = Storage.toggleFavorite(phone);
+            renderWorkers(currentFilter || searchInput.value); // Re-render to update icon
+            UI.showToast(isAdded ? 'Added to favorites' : 'Removed from favorites', 'success');
+        };
 
         // Initial render
         renderWorkers();
 
         // Search listener
         searchInput.addEventListener('input', (e) => {
-            renderWorkers(e.target.value);
+            currentFilter = e.target.value;
+            // Reset chips
+            chips.forEach(c => c.classList.remove('active'));
+            chips[0].classList.add('active');
+            renderWorkers(currentFilter);
+        });
+
+        // Chip listeners
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chips.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                
+                const filter = chip.dataset.filter;
+                currentFilter = filter;
+                searchInput.value = ''; // Clear search when using chips
+                renderWorkers(filter);
+            });
         });
     </script>
 </body>

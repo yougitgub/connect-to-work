@@ -17,8 +17,6 @@
                 <button id="show-register">Register</button>
             </div>
 
-            <div id="error-message" style="color: var(--danger-color); text-align: center; margin-bottom: 1rem; font-size: 0.9rem;"></div>
-
             <!-- Login Form -->
             <form id="login-form">
                 <div class="input-group">
@@ -75,18 +73,12 @@
         const registerForm = document.getElementById('register-form');
         const showLoginBtn = document.getElementById('show-login');
         const showRegisterBtn = document.getElementById('show-register');
-        const errorMessage = document.getElementById('error-message');
-
-        function clearError() {
-            errorMessage.textContent = '';
-        }
 
         showLoginBtn.addEventListener('click', () => {
             loginForm.classList.remove('hidden');
             registerForm.classList.add('hidden');
             showLoginBtn.classList.add('active');
             showRegisterBtn.classList.remove('active');
-            clearError();
         });
 
         showRegisterBtn.addEventListener('click', () => {
@@ -94,7 +86,6 @@
             registerForm.classList.remove('hidden');
             showLoginBtn.classList.remove('active');
             showRegisterBtn.classList.add('active');
-            clearError();
         });
 
         // Login Logic
@@ -107,7 +98,7 @@
                 Auth.login(phone, password);
                 window.location.href = 'index.html';
             } catch (error) {
-                errorMessage.textContent = error.message;
+                UI.showToast(error.message, 'error');
             }
         });
 
@@ -123,7 +114,7 @@
                 Auth.register(name, phone, password, role);
                 window.location.href = 'index.html';
             } catch (error) {
-                errorMessage.textContent = error.message;
+                UI.showToast(error.message, 'error');
             }
         });
     </script>

@@ -11,7 +11,10 @@
         <div class="container header-content">
             <a href="index.html" class="logo">Worker Connect</a>
             <div class="flex items-center gap-4">
-                <span id="user-name" class="font-bold" style="color: var(--text-main);"></span>
+                <div class="flex items-center gap-2">
+                    <div id="header-avatar"></div>
+                    <span id="user-name" class="font-bold" style="color: var(--text-main);"></span>
+                </div>
                 <a href="index.html" class="btn btn-outline text-sm">Home</a>
                 <button id="logout-btn" class="btn btn-outline text-sm">Logout</button>
             </div>
@@ -19,8 +22,8 @@
     </header>
 
     <main class="container">
-        <!-- Worker View -->
-        <div id="worker-view" style="animation: slideUp 0.5s ease-out;">
+        <!-- Worker View: Edit Profile -->
+        <div id="worker-view" class="hidden" style="animation: slideUp 0.5s ease-out;">
             <div class="card" style="max-width: 800px; margin: 0 auto;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; border-bottom: 1px solid var(--card-border); padding-bottom: 1rem;">
                     <h2 style="margin-bottom: 0; font-size: 2rem;">Your Profile</h2>
@@ -41,7 +44,17 @@
                         <button type="submit" class="btn btn-primary" style="min-width: 150px;">Update Profile</button>
                     </div>
                 </form>
-                <div id="profile-message" class="mt-4 text-center" style="font-weight: 600; min-height: 1.5rem;"></div>
+            </div>
+        </div>
+
+        <!-- User View: Favorites -->
+        <div id="user-view" class="hidden" style="animation: slideUp 0.5s ease-out;">
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2 style="margin-bottom: 1rem;">My Saved Workers</h2>
+                <p class="text-muted">Workers you have added to your favorites list.</p>
+            </div>
+            <div id="favorites-list" class="flex flex-col gap-4">
+                <!-- Favorites injected here -->
             </div>
         </div>
     </main>
@@ -53,13 +66,19 @@
 
         if (!currentUser) {
             window.location.href = 'login.html';
-        } else if (currentUser.role !== 'worker') {
-            window.location.href = 'index.html'; // Regular users don't need this page
         }
 
         if (currentUser) {
             document.getElementById('user-name').textContent = currentUser.name;
-            initWorkerView();
+            document.getElementById('header-avatar').innerHTML = UI.getAvatar(currentUser.name).replace('avatar', 'avatar avatar-sm');
+
+            if (currentUser.role === 'worker') {
+                document.getElementById('worker-view').classList.remove('hidden');
+                initWorkerView();
+            } else {
+                document.getElementById('user-view').classList.remove('hidden');
+                initUserView();
+            }
         }
 
         // Logout
@@ -89,24 +108,59 @@
                 Storage.saveUser(updatedUser);
                 Storage.setCurrentUser(updatedUser); // Update session
                 
-                const msg = document.getElementById('profile-message');
-                msg.textContent = 'Profile updated successfully!';
-                msg.style.color = 'var(--success-color)';
-                
-                // Add a little animation to the message
-                msg.style.animation = 'fadeIn 0.3s ease-out';
-                
-                setTimeout(() => {
-                    msg.style.opacity = '0';
-                    msg.style.transition = 'opacity 0.5s';
-                    setTimeout(() => {
-                        msg.textContent = '';
-                        msg.style.opacity = '1';
-                        msg.style.animation = '';
-                    }, 500);
-                }, 3000);
+                UI.showToast('Profile updated successfully!', 'success');
             });
         }
+
+        // User Logic
+        function initUserView() {
+            const favList = document.getElementById('favorites-list');
+            const workers = Storage.getWorkers();
+            const favs = Storage.getFavorites()[currentUser.phone] || [];
+
+            const myWorkers = workers.filter(w => favs.includes(w.phone));
+
+            if (myWorkers.length === 0) {
+                favList.innerHTML = '<div class="text-center text-muted" style="padding: 2rem;">You haven\'t saved any workers yet.</div>';
+                return;
+            }
+
+            favList.innerHTML = myWorkers.map(w => {
+                const avatar = UI.getAvatar(w.name);
+                const rating = UI.getRating(w.id || w.phone);
+                
+                return `
+                <div class="card worker-card">
+                    <div class="worker-header">
+                        <div class="flex items-center gap-4">
+                            ${avatar}
+                            <div>
+                                <div class="worker-name">${w.name}</div>
+                                <div class="worker-job">${w.jobTitle}</div>
+                                <div class="rating">
+                                    <span>★ ${rating.stars}</span>
+                                    <span class="rating-count">(${rating.count} reviews)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn-icon active" onclick="removeFav('${w.phone}')" title="Remove from favorites">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </button>
+                    </div>
+                    <div class="worker-actions" style="padding-left: 64px; margin-top: 1rem;">
+                        <a href="tel:${w.phone}" class="btn btn-primary btn-block">
+                            Call ${w.phone}
+                        </a>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        window.removeFav = (phone) => {
+            Storage.toggleFavorite(phone);
+            initUserView(); // Re-render
+            UI.showToast('Removed from favorites', 'success');
+        };
     </script>
 </body>
 </html>
