@@ -9,14 +9,15 @@
 <body>
     <div class="container auth-container">
         <div class="card">
-            <h1 class="text-center mb-4" style="color: var(--primary-color);">Worker Connect</h1>
+            <h1 class="text-center mb-4" style="font-size: 2rem; background: linear-gradient(to right, var(--primary-color), var(--secondary-color)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Worker Connect</h1>
+            <p class="text-center text-muted mb-4">Welcome back! Please login to continue.</p>
             
             <div class="auth-toggle">
                 <button id="show-login" class="active">Login</button>
                 <button id="show-register">Register</button>
             </div>
 
-            <div id="error-message"></div>
+            <div id="error-message" style="color: var(--danger-color); text-align: center; margin-bottom: 1rem; font-size: 0.9rem;"></div>
 
             <!-- Login Form -->
             <form id="login-form">
@@ -56,7 +57,7 @@
             </form>
             
             <div class="text-center mt-4">
-                <a href="index.html" class="text-sm text-muted" style="text-decoration: none;">Back to Home</a>
+                <a href="index.html" class="text-sm text-muted" style="text-decoration: none; border-bottom: 1px dashed var(--text-muted);">Back to Home</a>
             </div>
         </div>
     </div>
@@ -74,12 +75,18 @@
         const registerForm = document.getElementById('register-form');
         const showLoginBtn = document.getElementById('show-login');
         const showRegisterBtn = document.getElementById('show-register');
+        const errorMessage = document.getElementById('error-message');
+
+        function clearError() {
+            errorMessage.textContent = '';
+        }
 
         showLoginBtn.addEventListener('click', () => {
             loginForm.classList.remove('hidden');
             registerForm.classList.add('hidden');
             showLoginBtn.classList.add('active');
             showRegisterBtn.classList.remove('active');
+            clearError();
         });
 
         showRegisterBtn.addEventListener('click', () => {
@@ -87,6 +94,7 @@
             registerForm.classList.remove('hidden');
             showLoginBtn.classList.remove('active');
             showRegisterBtn.classList.add('active');
+            clearError();
         });
 
         // Login Logic
@@ -99,7 +107,7 @@
                 Auth.login(phone, password);
                 window.location.href = 'index.html';
             } catch (error) {
-                UI.showError(error.message, 'error-message');
+                errorMessage.textContent = error.message;
             }
         });
 
@@ -115,7 +123,7 @@
                 Auth.register(name, phone, password, role);
                 window.location.href = 'index.html';
             } catch (error) {
-                UI.showError(error.message, 'error-message');
+                errorMessage.textContent = error.message;
             }
         });
     </script>

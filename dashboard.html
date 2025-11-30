@@ -11,31 +11,37 @@
         <div class="container header-content">
             <a href="index.html" class="logo">Worker Connect</a>
             <div class="flex items-center gap-4">
-                <span id="user-name" class="font-bold"></span>
+                <span id="user-name" class="font-bold" style="color: var(--text-main);"></span>
                 <a href="index.html" class="btn btn-outline text-sm">Home</a>
                 <button id="logout-btn" class="btn btn-outline text-sm">Logout</button>
             </div>
         </div>
     </header>
 
-    <main class="container mt-4">
+    <main class="container">
         <!-- Worker View -->
-        <div id="worker-view">
-            <div class="card">
-                <h2 class="mb-4">Your Profile</h2>
+        <div id="worker-view" style="animation: slideUp 0.5s ease-out;">
+            <div class="card" style="max-width: 800px; margin: 0 auto;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; border-bottom: 1px solid var(--card-border); padding-bottom: 1rem;">
+                    <h2 style="margin-bottom: 0; font-size: 2rem;">Your Profile</h2>
+                    <span class="text-muted text-sm">Manage your public information</span>
+                </div>
+                
                 <form id="profile-form">
                     <div class="input-group">
                         <label class="label">Job Title (Arabic)</label>
                         <input type="text" id="job-title" class="input" placeholder="مثال: نجار، سباك، كهربائي" required>
-                        <p class="text-sm text-muted mt-4">This is how users will find you.</p>
+                        <p class="text-sm text-muted" style="margin-top: 0.5rem;">This is how users will find you in the search.</p>
                     </div>
                     <div class="input-group">
                         <label class="label">Description / Skills</label>
-                        <textarea id="job-desc" class="input" rows="3" placeholder="Describe your services..."></textarea>
+                        <textarea id="job-desc" class="input" rows="4" placeholder="Describe your services, experience, and what you offer..." style="resize: vertical; min-height: 100px;"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button type="submit" class="btn btn-primary" style="min-width: 150px;">Update Profile</button>
+                    </div>
                 </form>
-                <div id="profile-message" class="mt-4"></div>
+                <div id="profile-message" class="mt-4 text-center" style="font-weight: 600; min-height: 1.5rem;"></div>
             </div>
         </div>
     </main>
@@ -86,7 +92,19 @@
                 const msg = document.getElementById('profile-message');
                 msg.textContent = 'Profile updated successfully!';
                 msg.style.color = 'var(--success-color)';
-                setTimeout(() => msg.textContent = '', 3000);
+                
+                // Add a little animation to the message
+                msg.style.animation = 'fadeIn 0.3s ease-out';
+                
+                setTimeout(() => {
+                    msg.style.opacity = '0';
+                    msg.style.transition = 'opacity 0.5s';
+                    setTimeout(() => {
+                        msg.textContent = '';
+                        msg.style.opacity = '1';
+                        msg.style.animation = '';
+                    }, 500);
+                }, 3000);
             });
         }
     </script>
